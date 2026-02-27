@@ -238,7 +238,7 @@ const FunctionSelection = () => {
                                                 <span className="text-gray-300 group-hover:text-purple-400">→</span>
                                             </div>
                                             <span className="text-xs text-gray-400">
-                                                {new Date(func.createdAt).toLocaleDateString()}
+                                                {func.created_at ? new Date(func.created_at).toLocaleDateString() : ''}
                                             </span>
                                         </button>
 
