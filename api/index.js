@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 const serverless = require('serverless-http');
-const app = require('./src/app');
+const app = require('./_src/app');
 
 // Validate critical environment variables at cold-start
 const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET'];

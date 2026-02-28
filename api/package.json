@@ -4,8 +4,8 @@
     "description": "Vercel Serverless API for Moi Panam Manager",
     "main": "index.js",
     "scripts": {
-        "dev": "nodemon --watch src --watch index.js index.js",
-        "migrate": "node src/database/migrations/migrate.js"
+        "dev": "nodemon --watch _src --watch index.js index.js",
+        "migrate": "node _src/database/migrations/migrate.js"
     },
     "keywords": [
         "finance",
