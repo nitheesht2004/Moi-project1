@@ -23,6 +23,7 @@ exports.login = async (req, res, next) => {
 
 exports.register = async (req, res, next) => {
     try {
+        console.log("DATABASE_URL:", process.env.DATABASE_URL);
         console.log('📥 Registration request received');
         console.log('  Body:', req.body);
 
