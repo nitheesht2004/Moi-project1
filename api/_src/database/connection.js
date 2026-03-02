@@ -3,49 +3,64 @@
 /**
  * Neon PostgreSQL connection pool
  * ─────────────────────────────────
- * • Uses DATABASE_URL (single connection string) for Neon / any cloud PG.
- * • SSL is always enabled (required by Neon).
- * • Global singleton prevents connection exhaustion in serverless environments
- *   where the module cache is shared across warm invocations.
+ * IMPORTANT for Vercel serverless:
+ *   - Do NOT throw at module load time if DATABASE_URL is missing.
+ *     A top-level throw crashes the entire function before it can send
+ *     any response, causing Vercel to return a silent 504 timeout.
+ *   - Instead, surface the error at query-time so the controller can
+ *     catch it and return a proper JSON error to the client.
  */
 
 const { Pool } = require('pg');
 
-// ── Environment guard ──────────────────────────────────────────────────────
-if (!process.env.DATABASE_URL) {
-    throw new Error(
-        '❌ DATABASE_URL is not set. ' +
-        'Add it to your .env file (local) or Vercel Environment Variables (production).'
-    );
+// ── Diagnostics (visible in Vercel Function Logs) ─────────────────────────
+console.log('[db] Module loaded. DATABASE_URL present:', !!process.env.DATABASE_URL);
+if (process.env.DATABASE_URL) {
+    // Log a safe excerpt — enough to verify the host without exposing credentials.
+    try {
+        const url = new URL(process.env.DATABASE_URL);
+        console.log('[db] Connecting to host:', url.hostname, '| DB:', url.pathname.replace('/', ''));
+    } catch (_) {
+        console.log('[db] DATABASE_URL is set but could not be parsed as a URL.');
+    }
 }
 
 // ── Singleton pool ────────────────────────────────────────────────────────
-// `global._pgPool` survives hot-reloads in development and warm serverless
-// function re-invocations, keeping the connection count under control.
-if (!global._pgPool) {
-    global._pgPool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: {
-            // Required for Neon (and most cloud PG providers).
-            // rejectUnauthorized: false trusts the server cert without
-            // a local CA bundle — safe for managed cloud databases.
-            rejectUnauthorized: false,
-        },
-        // Serverless-friendly pool size: keep it small so Neon's
-        // connection limit is not hit across concurrent invocations.
-        max: 5,
-        idleTimeoutMillis: 30_000,
-        connectionTimeoutMillis: 10_000,
-    });
+// Lazily created so a missing DATABASE_URL doesn't crash cold-start.
+function getPool() {
+    if (!process.env.DATABASE_URL) {
+        // Throw here — at call-time — so controllers can catch and respond.
+        throw new Error(
+            'DATABASE_URL is not configured. ' +
+            'Add it in Vercel → Project → Settings → Environment Variables.'
+        );
+    }
 
-    global._pgPool.on('error', (err) => {
-        console.error('❌ Unexpected PostgreSQL pool error:', err.message);
-    });
+    if (!global._pgPool) {
+        console.log('[db] Creating new pg.Pool...');
+        global._pgPool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: {
+                // Required by Neon. Trusts the server cert without a local CA bundle.
+                rejectUnauthorized: false,
+            },
+            // Keep pool small — serverless functions are short-lived.
+            max: 3,
+            idleTimeoutMillis: 20_000,
+            // Fail fast: if Neon doesn't respond in 8s, throw rather than hang
+            // until Vercel's 10s hard timeout kills the function silently.
+            connectionTimeoutMillis: 8_000,
+        });
 
-    console.log('✅ PostgreSQL pool initialised (Neon)');
+        global._pgPool.on('error', (err) => {
+            console.error('[db] Unexpected pool error:', err.message);
+        });
+
+        console.log('[db] pg.Pool created successfully.');
+    }
+
+    return global._pgPool;
 }
-
-const pool = global._pgPool;
 
 /**
  * Execute a parameterised query.
@@ -53,23 +68,30 @@ const pool = global._pgPool;
  * @param {Array}  params Query parameters
  * @returns {Promise<import('pg').QueryResult>}
  */
-exports.query = (text, params) => pool.query(text, params);
+exports.query = (text, params) => {
+    const pool = getPool(); // throws if DATABASE_URL missing
+    return pool.query(text, params);
+};
 
 /**
  * Obtain a client from the pool for multi-statement transactions.
  * Remember to call client.release() in a finally block.
  * @returns {Promise<import('pg').PoolClient>}
  */
-exports.getClient = () => pool.connect();
+exports.getClient = () => {
+    const pool = getPool();
+    return pool.connect();
+};
 
 /**
  * Lightweight connectivity check — used by health-check routes.
  */
 exports.connectDatabase = async () => {
+    const pool = getPool();
     const client = await pool.connect();
     try {
         await client.query('SELECT 1');
-        console.log('✅ Database connectivity verified (Neon)');
+        console.log('[db] ✅ Database connectivity verified (Neon)');
     } finally {
         client.release();
     }
