@@ -54,6 +54,59 @@ app.get('/api/health', (req, res) => {
 });
 
 // ──────────────────────────────────────────────
+// DB connectivity diagnostic  — GET /api/test-db
+// Remove or protect this route once confirmed working.
+// ──────────────────────────────────────────────
+const { Pool } = require('pg');
+let _diagPool;
+function getDiagPool() {
+    if (!_diagPool) {
+        _diagPool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false },
+            max: 1,
+            idleTimeoutMillis: 10_000,
+            connectionTimeoutMillis: 5_000,
+        });
+    }
+    return _diagPool;
+}
+
+app.get('/api/test-db', async (req, res) => {
+    if (!process.env.DATABASE_URL) {
+        return res.status(500).json({
+            success: false,
+            error: 'DATABASE_URL is not set on this deployment.',
+        });
+    }
+
+    let client;
+    try {
+        client = await getDiagPool().connect();
+        const result = await client.query('SELECT NOW() AS current_time;');
+        const currentTime = result.rows[0].current_time;
+
+        console.log('[test-db] ✅ Connected. Server time:', currentTime);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Database connection is healthy.',
+            database_time: currentTime,
+            environment: process.env.NODE_ENV || 'production',
+        });
+    } catch (err) {
+        console.error('[test-db] ❌ Error:', err.message);
+        return res.status(504).json({
+            success: false,
+            error: 'Database connection or query failed.',
+            detail: err.message,
+        });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// ──────────────────────────────────────────────
 // Global async error wrapper helper
 // ──────────────────────────────────────────────
 // Attach to app so controllers can use it: app.asyncHandler(fn)
