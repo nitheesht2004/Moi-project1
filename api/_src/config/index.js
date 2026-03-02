@@ -2,7 +2,7 @@
 
 module.exports = {
     port: process.env.PORT || 5000,
-    nodeEnv: process.env.NODE_ENV || 'development',
+    nodeEnv: process.env.NODE_ENV || 'production',
     database: {
         // Neon / cloud PostgreSQL — single connection string
         url: process.env.DATABASE_URL,
