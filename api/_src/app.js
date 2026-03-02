@@ -10,24 +10,33 @@ const { errorHandler } = require('./middlewares/errorHandler');
 const app = express();
 
 // ──────────────────────────────────────────────
-// CORS — allow Vercel deployment + local dev
+// CORS — robust for Vercel + local dev
 // ──────────────────────────────────────────────
-const allowedOrigins = [
-    // Set CORS_ORIGIN in Vercel env to your production domain, e.g. https://yourapp.vercel.app
-    process.env.CORS_ORIGIN,
-    'http://localhost:3000',
-    'http://localhost:5173',
-].filter(Boolean); // remove undefined if CORS_ORIGIN not set
-
 app.use(
     cors({
         origin: (origin, callback) => {
-            // Allow server-to-server calls (no origin) and listed origins
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error(`CORS: origin ${origin} not allowed`));
+            // 1. Allow calls with no origin (like mobile apps, curl, direct browser hits to /api/health)
+            if (!origin) return callback(null, true);
+
+            // 2. Allow specific whitelisted origins
+            const whitelist = [
+                process.env.CORS_ORIGIN,
+                'http://localhost:3000',
+                'http://localhost:5173',
+            ].filter(Boolean);
+
+            if (whitelist.includes(origin)) {
+                return callback(null, true);
             }
+
+            // 3. Allow ANY vercel.app subdomain (useful for preview deployments)
+            if (origin.endsWith('.vercel.app')) {
+                return callback(null, true);
+            }
+
+            // 4. Fallback to rejecting (strict for prod)
+            console.warn(`[cors] Blocking restricted origin: ${origin}`);
+            callback(new Error(`CORS: origin ${origin} not allowed`));
         },
         credentials: true,
     })
@@ -42,21 +51,21 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ──────────────────────────────────────────────
-// Routes  –  all mounted under /api
+// Diagnostics & Health — Move ABOVE main router
 // ──────────────────────────────────────────────
-// Vercel routes /api/* → this file, so Express receives the full path.
-// The router handles /api/auth, /api/entries, etc.
-app.use('/api', routes);
 
-// Health check (also useful for Vercel function warm-up pings)
+// Request Logger (only for Vercel logs)
+app.use((req, res, next) => {
+    console.log(`[request] ${req.method} ${req.url} (Path: ${req.path}, Origin: ${req.headers.origin})`);
+    next();
+});
+
+// Health check
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// ──────────────────────────────────────────────
-// DB connectivity diagnostic  — GET /api/test-db
-// Remove or protect this route once confirmed working.
-// ──────────────────────────────────────────────
+// DB connectivity diagnostic
 const { Pool } = require('pg');
 let _diagPool;
 function getDiagPool() {
@@ -92,19 +101,24 @@ app.get('/api/test-db', async (req, res) => {
             success: true,
             message: 'Database connection is healthy.',
             database_time: currentTime,
-            environment: process.env.NODE_ENV || 'production',
         });
     } catch (err) {
         console.error('[test-db] ❌ Error:', err.message);
         return res.status(504).json({
             success: false,
-            error: 'Database connection or query failed.',
+            error: 'Database connection failed.',
             detail: err.message,
         });
     } finally {
         if (client) client.release();
     }
 });
+
+// ──────────────────────────────────────────────
+// Routes – mounted under /api
+// ──────────────────────────────────────────────
+app.use('/api', routes);
+
 
 // ──────────────────────────────────────────────
 // Global async error wrapper helper
