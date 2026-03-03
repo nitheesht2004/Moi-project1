@@ -143,34 +143,65 @@ app.get('/api/debug-schema', async (req, res) => {
     }
 });
 
-// "Fix-it" route: Run user schema migration manually
+// "Fix-it" route: Run full database schema repair
 app.get('/api/run-migration', async (req, res) => {
     let client;
     try {
         client = await getDiagPool().connect();
+        console.log('[migration] Starting full schema repair...');
 
-        console.log('[migration] Checking/Adding missing columns to "users" table...');
-
-        // 1. Add email column
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)');
-        // 2. Add full_name column
-        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)');
-        // 3. Add unique index for email
+        // 1. Repair USERS table (add missing columns)
+        await client.query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS email VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS full_name VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user'
+        `);
         await client.query('CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email) WHERE email IS NOT NULL');
+        console.log('[migration] users table repaired.');
 
-        console.log('[migration] ✅ Schema update completed.');
+        // 2. Create EVENTS table if missing
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS events (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('[migration] events table verified/created.');
+
+        // 3. Create ENTRIES table if missing
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS entries (
+                id SERIAL PRIMARY KEY,
+                event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                name VARCHAR(255) NOT NULL,
+                location VARCHAR(255),
+                amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+                denominations JSONB,
+                notes TEXT,
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('[migration] entries table verified/created.');
 
         return res.status(200).json({
             success: true,
-            message: 'Schema migration (email/full_name) successful.'
+            message: 'All tables (users, events, entries) and columns (email, full_name, role) have been verified and repaired.'
         });
     } catch (err) {
-        console.error('[migration] ❌ Failed:', err.message);
+        console.error('[migration] ❌ Error:', err.message);
         return res.status(500).json({ success: false, error: err.message });
     } finally {
         if (client) client.release();
     }
 });
+
 
 
 
