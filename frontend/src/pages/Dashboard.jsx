@@ -30,7 +30,7 @@ const Dashboard = () => {
     const [locationFilter, setLocationFilter] = useState('');
     const [minAmount, setMinAmount] = useState('');
     const [maxAmount, setMaxAmount] = useState('');
-    const [sortBy, setSortBy] = useState('amount');
+    const [sortBy, setSortBy] = useState('');
     const [sortOrder, setSortOrder] = useState('desc');
 
     // Debounce search with 500ms delay
