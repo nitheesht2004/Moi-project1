@@ -182,14 +182,16 @@ const Dashboard = () => {
     // Sorting handler - only updates state, useEffect handles API call
     const handleSortChange = (field) => {
         if (sortBy === field) {
-            // Toggle order if clicking same field
-            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+            // Deselect: clicking the same active button clears the sort
+            setSortBy('');
+            setSortOrder('desc');
         } else {
-            // Reset to asc if clicking different field
+            // Select new field, start ascending
             setSortBy(field);
             setSortOrder('asc');
         }
     };
+
 
     // Clear all filters
     const handleClearFilters = () => {
@@ -455,11 +457,8 @@ const Dashboard = () => {
                     <div className="flex items-center justify-between">
                         {/* Left: Logo + Title */}
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-                                <svg className="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                            </div>
+                            <img src="/logo.svg" alt="MPM Logo" className="w-10 h-10 md:w-12 md:h-12 drop-shadow-md flex-shrink-0" />
+
                             <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate max-w-[200px] md:max-w-none">
                                 {activeFunction ? activeFunction.name : t.moiPanamManager}
                             </h1>

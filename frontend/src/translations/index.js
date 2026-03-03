@@ -110,7 +110,18 @@ export const translations = {
         excelNotes: 'Notes',
         excelTotalEntries: 'Total Entries',
         excelTotalAmount: 'Total Amount',
-        excelDenominationBreakdown: 'Denomination Breakdown'
+        excelDenominationBreakdown: 'Denomination Breakdown',
+        clearAll: 'Clear All',
+        targetAmountLabel: 'Target Amount',
+        currentTotal: 'Current Total',
+        remaining: 'Remaining',
+        over: '(Over)',
+        exceedsTarget: 'Denomination exceeds target - All inputs disabled',
+        resetDenomination: 'Reset Denomination',
+        addMoreToMatch: 'Add more to match the target amount',
+        perfectMatch: 'Perfect! Denomination matches amount exactly',
+        grandTotal: 'Grand Total:',
+        perfectMatchIndicator: 'Perfect Match!'
     },
     ta: {
         // Common
@@ -223,7 +234,18 @@ export const translations = {
         excelNotes: 'குறிப்புகள்',
         excelTotalEntries: 'மொத்த பதிவுகள்',
         excelTotalAmount: 'மொத்த தொகை',
-        excelDenominationBreakdown: 'நாணய விவரம்'
+        excelDenominationBreakdown: 'நாணய விவரம்',
+        clearAll: 'அனைத்தையும் அழி',
+        targetAmountLabel: 'இலக்குத் தொகை',
+        currentTotal: 'தற்போதைய மொத்தம்',
+        remaining: 'மீதம்',
+        over: '(கூடுதல்)',
+        exceedsTarget: 'நாணயத் தொகை இலக்கை விட அதிகமாக உள்ளது - அனைத்து உள்ளீடுகளும் முடக்கப்பட்டுள்ளன',
+        resetDenomination: 'நாணய விவரத்தை மீட்டமைக்கவும்',
+        addMoreToMatch: 'இலக்குத் தொகையுடன் பொருந்த இன்னும் சேர்க்கவும்',
+        perfectMatch: 'மிகச்சரி! நாணய விவரம் தொகையுடன் சரியாகப் பொருந்துகிறது',
+        grandTotal: 'மொத்தத் தொகை:',
+        perfectMatchIndicator: 'மிகச்சரியான பொருத்தம்!'
     }
 };
 

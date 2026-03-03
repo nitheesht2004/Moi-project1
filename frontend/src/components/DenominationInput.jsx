@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { translations } from '../translations';
 
 const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmount = 0, onClose }) => {
+    const { language } = useLanguage();
+    const t = translations[language];
     const denominations = [500, 200, 100, 50, 20, 10, 5, 2, 1];
 
     const [counts, setCounts] = useState(
@@ -141,7 +145,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                 </svg>
                             </div>
                             <h3 className="text-lg md:text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                                Denomination Breakdown
+                                {t.denominationBreakdown}
                             </h3>
                         </div>
 
@@ -156,7 +160,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
-                                <span>Clear All</span>
+                                <span>{t.clearAll}</span>
                             </button>
 
                             {/* Clear All Icon Only - Shown only on extra small screens */}
@@ -187,26 +191,26 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                     </div>
 
                     {/* Status Dashboard */}
-                    <div className="mb-6 p-5 rounded-xl bg-white/80 backdrop-blur-sm shadow-lg border-2 border-gray-100">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="mb-6 p-3 rounded-xl bg-white/80 backdrop-blur-sm shadow-lg border-2 border-gray-100 overflow-hidden">
+                        <div className="grid grid-cols-3 gap-2">
                             {/* Entered Amount */}
-                            <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100/50">
-                                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Target Amount</p>
-                                <p className="text-2xl md:text-3xl font-bold text-blue-700">₹{target.toLocaleString()}</p>
+                            <div className="text-center p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100/50 min-w-0 overflow-hidden">
+                                <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide mb-1 truncate">{t.targetAmountLabel}</p>
+                                <p className="text-base sm:text-lg font-bold text-blue-700 truncate">₹{target.toLocaleString()}</p>
                             </div>
 
                             {/* Denomination Total */}
-                            <div className={`text-center p-4 rounded-lg transition-all duration-300 ${statusColor === 'red' ? 'bg-gradient-to-br from-red-50 to-red-100/50 animate-pulse' :
+                            <div className={`text-center p-2 rounded-lg transition-all duration-300 min-w-0 overflow-hidden ${statusColor === 'red' ? 'bg-gradient-to-br from-red-50 to-red-100/50 animate-pulse' :
                                 statusColor === 'green' ? 'bg-gradient-to-br from-green-50 to-green-100/50' :
                                     statusColor === 'yellow' ? 'bg-gradient-to-br from-yellow-50 to-yellow-100/50' :
                                         'bg-gradient-to-br from-gray-50 to-gray-100/50'
                                 }`}>
-                                <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${statusColor === 'red' ? 'text-red-600' :
+                                <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 truncate ${statusColor === 'red' ? 'text-red-600' :
                                     statusColor === 'green' ? 'text-green-600' :
                                         statusColor === 'yellow' ? 'text-yellow-600' :
                                             'text-gray-600'
-                                    }`}>Current Total</p>
-                                <p className={`text-2xl md:text-3xl font-bold transition-all duration-300 ${statusColor === 'red' ? 'text-red-700' :
+                                    }`}>{t.currentTotal}</p>
+                                <p className={`text-base sm:text-lg font-bold truncate transition-all duration-300 ${statusColor === 'red' ? 'text-red-700' :
                                     statusColor === 'green' ? 'text-green-700' :
                                         statusColor === 'yellow' ? 'text-yellow-700' :
                                             'text-gray-700'
@@ -214,20 +218,20 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                             </div>
 
                             {/* Remaining */}
-                            <div className={`text-center p-4 rounded-lg transition-all duration-300 ${remaining < 0 ? 'bg-gradient-to-br from-red-50 to-red-100/50' :
+                            <div className={`text-center p-2 rounded-lg transition-all duration-300 min-w-0 overflow-hidden ${remaining < 0 ? 'bg-gradient-to-br from-red-50 to-red-100/50' :
                                 remaining === 0 ? 'bg-gradient-to-br from-green-50 to-green-100/50' :
                                     'bg-gradient-to-br from-orange-50 to-orange-100/50'
                                 }`}>
-                                <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${remaining < 0 ? 'text-red-600' :
+                                <p className={`text-[10px] font-semibold uppercase tracking-wide mb-1 truncate ${remaining < 0 ? 'text-red-600' :
                                     remaining === 0 ? 'text-green-600' :
                                         'text-orange-600'
-                                    }`}>Remaining</p>
-                                <p className={`text-2xl md:text-3xl font-bold ${remaining < 0 ? 'text-red-700' :
+                                    }`}>{t.remaining}</p>
+                                <p className={`text-base sm:text-lg font-bold truncate ${remaining < 0 ? 'text-red-700' :
                                     remaining === 0 ? 'text-green-700' :
                                         'text-orange-700'
                                     }`}>
                                     ₹{Math.abs(animatedRemaining).toLocaleString()}
-                                    {remaining < 0 && <span className="text-sm ml-1">(Over)</span>}
+                                    {remaining < 0 && <span className="text-xs ml-1">{t.over}</span>}
                                 </p>
                             </div>
                         </div>
@@ -240,7 +244,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                 <svg className="w-5 h-5 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                 </svg>
-                                <span>⚠️ Denomination exceeds target - All inputs disabled</span>
+                                <span>⚠️ {t.exceedsTarget}</span>
                             </p>
                             <button
                                 onClick={handleClear}
@@ -249,7 +253,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
-                                Reset Denomination
+                                {t.resetDenomination}
                             </button>
                         </div>
                     )}
@@ -260,7 +264,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                 </svg>
-                                ⚡ Add ₹{remaining.toLocaleString()} more to match the target amount
+                                ⚡ {t.addMoreToMatch.replace('the target amount', `₹${remaining.toLocaleString()}`)}
                             </p>
                         </div>
                     )}
@@ -271,7 +275,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                 <svg className="w-5 h-5 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
-                                ✓ Perfect! Denomination matches amount exactly
+                                ✓ {t.perfectMatch}
                             </p>
                         </div>
                     )}
@@ -298,29 +302,29 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                     {/* Exact Match Indicator */}
                                     {isExactMatch && (
                                         <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs font-bold py-1 px-2 text-center">
-                                            ✓ Perfect Match!
+                                            ✓ {t.perfectMatchIndicator}
                                         </div>
                                     )}
 
                                     {/* Card Header */}
-                                    <div className={`p-3 text-center transition-colors duration-300 ${isDenomDisabled
+                                    <div className={`h-12 flex items-center justify-center transition-colors duration-300 ${isDenomDisabled
                                         ? 'bg-gray-300'
                                         : isExactMatch
                                             ? 'bg-gradient-to-br from-green-500 to-emerald-600'
                                             : 'bg-gradient-to-br from-purple-500 to-blue-600'
                                         }`}>
-                                        <p className="text-white font-bold text-lg">₹{denom}</p>
+                                        <p className="text-white font-bold text-lg leading-none">₹{denom}</p>
                                     </div>
 
                                     {/* Card Body */}
-                                    <div className={`p-3 ${isExactMatch ? 'pt-6' : ''}`}>
+                                    <div className={`p-3 ${isExactMatch ? 'pt-6' : ''} flex flex-col items-center justify-center`}>
                                         <input
                                             type="number"
                                             min="0"
                                             value={counts[denom]}
                                             onChange={(e) => handleCountChange(denom, e.target.value)}
                                             disabled={isDenomDisabled}
-                                            className={`w-full h-12 px-2 text-center text-xl md:text-2xl font-bold border-2 rounded-lg transition-all duration-300 outline-none appearance-none ${isDenomDisabled
+                                            className={`w-full h-12 text-center text-xl md:text-2xl font-bold border-2 rounded-lg transition-all duration-300 outline-none appearance-none px-1 ${isDenomDisabled
                                                 ? 'bg-gray-100 border-gray-300 cursor-not-allowed text-gray-400'
                                                 : isExactMatch
                                                     ? 'border-green-400 text-green-700 bg-green-50 shadow-inner'
@@ -353,7 +357,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                                 <svg className="w-5 h-5 animate-bounce" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
-                                💡 Add ₹{remaining.toLocaleString()} more to match the target amount exactly!
+                                💡 {t.addMoreToMatch.replace('the target amount', `₹${remaining.toLocaleString()}`)}!
                             </p>
                         </div>
                     )}
@@ -361,7 +365,7 @@ const DenominationInput = ({ onTotalChange, initialDenominations = {}, targetAmo
                     {/* Total Display */}
                     <div className="border-t-2 border-purple-100 pt-6">
                         <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl">
-                            <span className="text-lg md:text-xl font-bold text-gray-800">Grand Total:</span>
+                            <span className="text-lg md:text-xl font-bold text-gray-800">{t.grandTotal}</span>
                             <span className={`text-3xl md:text-4xl font-bold transition-all duration-300 ${statusColor === 'red' ? 'text-red-600' :
                                 statusColor === 'green' ? 'text-green-600' :
                                     statusColor === 'yellow' ? 'text-yellow-600' :
