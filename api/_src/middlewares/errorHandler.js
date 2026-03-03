@@ -20,15 +20,14 @@ exports.errorHandler = (err, req, res, next) => { // eslint-disable-line no-unus
     }
 
     const statusCode = err.statusCode || err.status || 500;
-    const message =
-        // Expose the error message unless it's a raw 500 in production
-        isProduction && statusCode === 500
-            ? 'Internal Server Error'
-            : err.message || 'Internal Server Error';
+    const message = err.message || 'Internal Server Error';
 
     res.status(statusCode).json({
         success: false,
         error: message,
+        // Include detailed diagnostic if it's a database error
+        ...(err.code ? { code: err.code, detail: err.detail } : {}),
+
         // Include stack trace only in development
         ...(isProduction ? {} : { stack: err.stack }),
     });
