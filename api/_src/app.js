@@ -114,6 +114,66 @@ app.get('/api/test-db', async (req, res) => {
     }
 });
 
+// Diagnostic route to check shelf schema
+app.get('/api/debug-schema', async (req, res) => {
+    let client;
+    try {
+        client = await getDiagPool().connect();
+        const tables = await client.query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+        `);
+
+        const columns = await client.query(`
+            SELECT table_name, column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' AND table_name = 'users'
+        `);
+
+        return res.status(200).json({
+            success: true,
+            tables: tables.rows.map(r => r.table_name),
+            users_columns: columns.rows
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// "Fix-it" route: Run user schema migration manually
+app.get('/api/run-migration', async (req, res) => {
+    let client;
+    try {
+        client = await getDiagPool().connect();
+
+        console.log('[migration] Checking/Adding missing columns to "users" table...');
+
+        // 1. Add email column
+        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)');
+        // 2. Add full_name column
+        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)');
+        // 3. Add unique index for email
+        await client.query('CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email) WHERE email IS NOT NULL');
+
+        console.log('[migration] ✅ Schema update completed.');
+
+        return res.status(200).json({
+            success: true,
+            message: 'Schema migration (email/full_name) successful.'
+        });
+    } catch (err) {
+        console.error('[migration] ❌ Failed:', err.message);
+        return res.status(500).json({ success: false, error: err.message });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+
+
 // ──────────────────────────────────────────────
 // Routes – mounted under /api
 // ──────────────────────────────────────────────

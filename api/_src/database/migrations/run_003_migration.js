@@ -1,5 +1,6 @@
 // Migration script to add email and full_name to users table
-const db = require('./connection');
+const db = require('../connection');
+
 
 async function runMigration() {
     try {
